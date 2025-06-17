@@ -16,6 +16,13 @@ const NthRoot = () => {
     step1: false,
     step2: false
   });
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [showNavigationButtons, setShowNavigationButtons] = useState(false);
+  const [navigationDirection, setNavigationDirection] = useState(null);
+  const [stepSkipped, setStepSkipped] = useState({
+    step1: false,
+    step2: false
+  });
 
   const examples = [
     {
@@ -64,88 +71,180 @@ const NthRoot = () => {
     setStep1Input('');
     setStep2Input('');
     setHasError({ step1: false, step2: false });
+    setCurrentStepIndex(0);
+    setShowNavigationButtons(false);
+    setNavigationDirection(null);
+    setStepSkipped({ step1: false, step2: false });
   };
 
   const handleStep1Check = () => {
     const isCorrect = step1Input === questions[currentQuestion].index;
     setHasError(prev => ({ ...prev, step1: !isCorrect }));
-    if (isCorrect) setStep1Complete(true);
+    if (isCorrect) {
+      setStep1Complete(true);
+      setStepSkipped(prev => ({ ...prev, step1: false }));
+    }
   };
 
   const handleStep2Check = () => {
     const isCorrect = step2Input === questions[currentQuestion].solution;
     setHasError(prev => ({ ...prev, step2: !isCorrect }));
-    if (isCorrect) setStep2Complete(true);
+    if (isCorrect) {
+      setStep2Complete(true);
+      setStepSkipped(prev => ({ ...prev, step2: false }));
+    }
   };
 
+  const skipStepOne = () => {
+    setStep1Input(questions[currentQuestion].index);
+    setStep1Complete(true);
+    setStepSkipped(prev => ({ ...prev, step1: true }));
+  };
+
+  const skipStepTwo = () => {
+    setStep2Input(questions[currentQuestion].solution);
+    setStep2Complete(true);
+    setStepSkipped(prev => ({ ...prev, step2: true }));
+  };
+
+  const handleNavigateHistory = (direction) => {
+    setNavigationDirection(direction);
+    
+    if (direction === 'back' && currentStepIndex > 0) {
+      setCurrentStepIndex(prev => prev - 1);
+    } else if (direction === 'forward' && currentStepIndex < 1) {
+      setCurrentStepIndex(prev => prev + 1);
+    }
+
+    setTimeout(() => {
+      setNavigationDirection(null);
+    }, 300);
+  };
+
+  React.useEffect(() => {
+    if (step1Complete && step2Complete) {
+      setShowNavigationButtons(true);
+    }
+  }, [step1Complete, step2Complete]);
+
   return (
-    <div className="bg-gray-100 p-8 w-[780px] overflow-auto">
-      <Card className="w-[748px] mx-auto shadow-md bg-white">
-        <div className="bg-sky-50 p-6 rounded-t-lg w-[748px]">
-          <h1 className="text-sky-900 text-2xl font-bold">Root Learning</h1>
-          <p className="text-sky-800">Learn about roots and practice finding them!</p>
-        </div>
+    <>
+      <style>{`
+        @property --r {
+          syntax: '<angle>';
+          inherits: false;
+          initial-value: 0deg;
+        }
 
-        <CardContent className="space-y-6 pt-6 w-[748px]">
-          {/* Definition Box */}
-          <div className="bg-blue-50 p-4 rounded border border-blue-200">
-            <h2 className="text-blue-900 font-bold mb-2">What are Roots?</h2>
-            <p className="text-blue-600">
-              Roots (represented by √) are the inverse operation of exponents. If you have a number, 
-              x raised to the power of n, written as xⁿ, the n-th root of xⁿ will give you back x. 
-              Essentially we are asking, "What number, when multiplied by itself a certain number 
-              of times, gives us this result?"
-            </p>
-            <p className="text-blue-600 mt-4">
-              If there is a small number before the root symbol, known as the index, it tells us 
-              how many times to multiply the number by itself. If there is no number, it is assumed to be 2 (square root).
-            </p>
+        .glow-button { 
+          min-width: auto; 
+          height: auto; 
+          position: relative; 
+          border-radius: 8px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1;
+          transition: all .3s ease;
+          padding: 7px;
+        }
+
+        .glow-button::before {
+          content: "";
+          display: block;
+          position: absolute;
+          background: #fff;
+          inset: 2px;
+          border-radius: 4px;
+          z-index: -2;
+        }
+
+        .simple-glow {
+          background: conic-gradient(
+            from var(--r),
+            transparent 0%,
+            rgb(0, 255, 132) 2%,
+            rgb(0, 214, 111) 8%,
+            rgb(0, 174, 90) 12%,
+            rgb(0, 133, 69) 14%,
+            transparent 15%
+          );
+          animation: rotating 3s linear infinite;
+          transition: animation 0.3s ease;
+        }
+
+        .simple-glow.stopped {
+          animation: none;
+          background: none;
+        }
+
+        @keyframes rotating {
+          0% {
+            --r: 0deg;
+          }
+          100% {
+            --r: 360deg;
+          }
+        }
+
+        .nav-button {
+          opacity: 1;
+          cursor: default !important;
+          position: relative;
+          z-index: 2;
+          outline: 2px white solid;
+        }
+
+        .nav-button-orbit {
+          position: absolute;
+          inset: -4px;
+          border-radius: 50%;
+          background: conic-gradient(
+            from var(--r),
+            transparent 0%,
+            rgb(0, 255, 132) 2%,
+            rgb(0, 214, 111) 8%,
+            rgb(0, 174, 90) 12%,
+            rgb(0, 133, 69) 14%,
+            transparent 15%
+          );
+          animation: rotating 3s linear infinite;
+          z-index: 0;
+        }
+
+        .nav-button-orbit::before {
+          content: "";
+          position: absolute;
+          inset: 2px;
+          background: transparent;
+          border-radius: 50%;
+          z-index: 0;
+        }
+
+        .nav-button svg {
+          position: relative;
+          z-index: 1;
+        }
+      `}</style>
+      <div className="w-[500px] h-auto mx-auto shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.05)] bg-white rounded-lg overflow-hidden">
+        <div className="p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-[#5750E3] text-sm font-medium select-none">Root Learning</h2>
+            <Button 
+              onClick={handleNewQuestion}
+              className="bg-[#008545] hover:bg-[#00703d] text-white px-4 h-[32px] flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              New Root
+            </Button>
           </div>
 
-          {/* Examples Section */}
-          <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Examples</h2>
-            <div className="flex space-x-4 mb-4">
-              {examples.map((_, index) => (
-                <Button
-                  key={index}
-                  onClick={() => setSelectedExample(index)}
-                  className={`px-4 py-2 rounded ${
-                    selectedExample === index
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 hover:bg-gray-300'
-                  }`}
-                >
-                  Example {index + 1}
-                </Button>
-              ))}
-            </div>
-            <Card className="border border-gray-200">
-              <CardContent className="p-8 pt-10">
-                <p className="text-3xl font-bold mb-6">{examples[selectedExample].problem}</p>
-                <p className="text-xl mb-4">Solution: {examples[selectedExample].solution}</p>
-                <p>{examples[selectedExample].explanation}</p>
-              </CardContent>
-            </Card>
+          <div className="text-center text-xl mb-4">
+            <span className="font-mono">{questions[currentQuestion].problem}</span>
           </div>
 
-          {/* Practice Section */}
-          <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-purple-900 font-bold">Practice Time!</h2>
-              <Button 
-                onClick={handleNewQuestion}
-                className="bg-sky-500 hover:bg-sky-600 text-white px-4 flex items-center gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                New Question
-              </Button>
-            </div>
-
-            <div className="text-center text-2xl mb-4">
-              <span className="font-bold">{questions[currentQuestion].problem}</span>
-            </div>
-
+          <div className={`glow-button ${showAnswer ? 'simple-glow stopped' : 'simple-glow'}`}>
             <Button 
               onClick={() => {
                 setShowAnswer(true);
@@ -154,112 +253,214 @@ const NthRoot = () => {
                 setStep1Input('');
                 setStep2Input('');
                 setHasError({ step1: false, step2: false });
+                setCurrentStepIndex(0);
+                setShowNavigationButtons(false);
+                setNavigationDirection(null);
+                setStepSkipped({ step1: false, step2: false });
               }}
-              className="w-full bg-blue-950 hover:bg-blue-900 text-white py-3"
+              className="w-full bg-[#008545] hover:bg-[#00703d] text-white py-2 rounded"
             >
               Solve Step by Step
             </Button>
+          </div>
+        </div>
 
-            {showAnswer && (
-              <div className="bg-purple-50 p-4 rounded-lg mt-4">
-                <p>1. What is the index of the root?</p>
-                <div className="flex items-center gap-4 my-4">
-                  {step1Complete ? (
-                    <span className="text-green-600 font-medium">{questions[currentQuestion].index}</span>
-                  ) : (
-                    <Input 
-                      type="text"
-                      value={step1Input}
-                      onChange={(e) => {
-                        setStep1Input(e.target.value);
-                        setHasError(prev => ({ ...prev, step1: false }));
-                      }}
-                      className={`w-20 text-center ${
-                        hasError.step1 ? 'border-red-500 focus:border-red-500' : 'border-blue-300'
-                      }`}
-                    />
-                  )}
-                  {!step1Complete && (
-                    <div className="flex gap-4">
-                      <Button
-                        onClick={handleStep1Check}
-                        className="bg-blue-400 hover:bg-blue-500"
-                      >
-                        Check
-                      </Button>
-                      <Button
-                        onClick={() => setStep1Complete(true)}
-                        className="bg-gray-400 hover:bg-gray-500 text-white"
-                      >
-                        Skip
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {step1Complete && (
+        {showAnswer && (
+          <div className="bg-gray-50">
+            <div className="p-4 space-y-4">
+              <div className="w-full p-2 mb-1 bg-white border border-[#5750E3]/30 rounded-md">
+                {currentStepIndex === 0 && (
                   <>
-                    <p>2. What number when multiplied by itself {step1Input} times gives you {questions[currentQuestion].number}?</p>
-                    <div className="my-4">
-                      <div className="flex items-center gap-4 mt-2">
-                        {step2Complete ? (
-                          <span className="text-green-600 font-medium">{questions[currentQuestion].solution}</span>
-                        ) : (
-                          <Input 
-                            type="text"
-                            value={step2Input}
-                            onChange={(e) => {
-                              setStep2Input(e.target.value);
-                              setHasError(prev => ({ ...prev, step2: false }));
-                            }}
-                            className={`w-20 text-center ${
-                              hasError.step2 ? 'border-red-500 focus:border-red-500' : 'border-blue-300'
-                            }`}
-                          />
-                        )}
-                        {!step2Complete && (
-                          <div className="flex gap-4">
-                            <Button
-                              onClick={handleStep2Check}
-                              className="bg-blue-400 hover:bg-blue-500"
-                            >
-                              Check
-                            </Button>
-                            <Button
-                              onClick={() => setStep2Complete(true)}
-                              className="bg-gray-400 hover:bg-gray-500 text-white"
-                            >
-                              Skip
-                            </Button>
+                    <p className="text-sm mb-2">Step 1: What is the index of the root?</p>
+                    <div className="space-y-2">
+                      {!step1Complete ? (
+                        <>
+                          <div className={`flex items-center border rounded-md overflow-hidden relative ${
+                            hasError.step1 ? 'border-red-500' : ''
+                          }`}>
+                            <Input 
+                              type="text"
+                              value={step1Input}
+                              onChange={(e) => {
+                                setStep1Input(e.target.value);
+                                setHasError(prev => ({ ...prev, step1: false }));
+                              }}
+                              placeholder="Enter the index"
+                              className={`w-full border-0 focus-visible:ring-0 focus-visible:ring-offset-0 ${
+                                hasError.step1 ? 'bg-red-50' : ''
+                              }`}
+                            />
                           </div>
-                        )}
-                      </div>
-                      {step2Complete && (
-                        <p className="mt-4">
-                          Verification: {questions[currentQuestion].intermediateStep} = {questions[currentQuestion].number}
-                        </p>
+                          <div className="flex gap-2 justify-end">
+                            <div className="glow-button simple-glow">
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={handleStep1Check}
+                                  className="bg-[#008545] hover:bg-[#00703d] text-white text-sm px-4 py-2 rounded-md"
+                                >
+                                  Check
+                                </Button>
+                                <Button
+                                  onClick={skipStepOne}
+                                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-md"
+                                >
+                                  Skip
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center mb-4">
+                            <span className="font-medium text-[#008545]">
+                              {step1Input}
+                            </span>
+                          </div>
+                          {!showNavigationButtons && (
+                            <div className="flex justify-end items-center gap-2">
+                              {!stepSkipped.step1 && (
+                                <span className="text-green-600 font-medium">Great Job!</span>
+                              )}
+                              <div className="glow-button simple-glow">
+                                <Button
+                                  onClick={() => setCurrentStepIndex(1)}
+                                  className="bg-[#008545] hover:bg-[#00703d] text-white text-sm px-4 py-2 rounded-md"
+                                >
+                                  Continue
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </>
                 )}
 
-                {step2Complete && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
-                    <h3 className="text-green-800 text-xl font-bold">Great Work!</h3>
-                    <p className="text-green-700">
-                      You've successfully found the root!
-                    </p>
-                  </div>
+                {currentStepIndex === 1 && step1Complete && (
+                  <>
+                    <p className="text-sm mb-2">Step 2: What number when multiplied by itself {step1Input} times gives you {questions[currentQuestion].number}?</p>
+                    <div className="space-y-2">
+                      {!step2Complete ? (
+                        <>
+                          <div className={`flex items-center border rounded-md overflow-hidden relative ${
+                            hasError.step2 ? 'border-red-500' : ''
+                          }`}>
+                            <Input 
+                              type="text"
+                              value={step2Input}
+                              onChange={(e) => {
+                                setStep2Input(e.target.value);
+                                setHasError(prev => ({ ...prev, step2: false }));
+                              }}
+                              placeholder="Enter your answer"
+                              className={`w-full border-0 focus-visible:ring-0 focus-visible:ring-offset-0 ${
+                                hasError.step2 ? 'bg-red-50' : ''
+                              }`}
+                            />
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <div className="glow-button simple-glow">
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={handleStep2Check}
+                                  className="bg-[#008545] hover:bg-[#00703d] text-white text-sm px-4 py-2 rounded-md"
+                                >
+                                  Check
+                                </Button>
+                                <Button
+                                  onClick={skipStepTwo}
+                                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-md"
+                                >
+                                  Skip
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center mb-4">
+                            <span className="font-medium text-[#008545]">
+                              {step2Input}
+                            </span>
+                          </div>
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                            <h3 className="text-green-800 text-xl font-bold">Great Work!</h3>
+                            <p className="text-green-700">
+                              You've successfully found the root!
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
-            )}
+
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <div
+                  className="nav-orbit-wrapper"
+                  style={{
+                    position: 'relative',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    visibility: showNavigationButtons && currentStepIndex > 0 ? 'visible' : 'hidden',
+                    opacity: showNavigationButtons && currentStepIndex > 0 ? 1 : 0,
+                    pointerEvents: showNavigationButtons && currentStepIndex > 0 ? 'auto' : 'none',
+                    transition: 'opacity 0.2s ease',
+                  }}
+                >
+                  <div className="nav-button-orbit"></div>
+                  <div style={{ position: 'absolute', width: '32px', height: '32px', borderRadius: '50%', background: 'white', zIndex: 1 }}></div>
+                  <button
+                    onClick={() => handleNavigateHistory('back')}
+                    className={`nav-button w-8 h-8 flex items-center justify-center rounded-full bg-[#008545]/20 text-[#008545] hover:bg-[#008545]/30 relative z-50`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                  </button>
+                </div>
+                <span className="text-sm text-gray-500 min-w-[100px] text-center">
+                  Step {currentStepIndex + 1} of 2
+                </span>
+                <div
+                  className="nav-orbit-wrapper"
+                  style={{
+                    position: 'relative',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    visibility: showNavigationButtons && currentStepIndex < 1 ? 'visible' : 'hidden',
+                    opacity: showNavigationButtons && currentStepIndex < 1 ? 1 : 0,
+                    pointerEvents: showNavigationButtons && currentStepIndex < 1 ? 'auto' : 'none',
+                    transition: 'opacity 0.2s ease',
+                  }}
+                >
+                  <div className="nav-button-orbit"></div>
+                  <div style={{ position: 'absolute', width: '32px', height: '32px', borderRadius: '50%', background: 'white', zIndex: 1 }}></div>
+                  <button
+                    onClick={() => handleNavigateHistory('forward')}
+                    className={`nav-button w-8 h-8 flex items-center justify-center rounded-full bg-[#008545]/20 text-[#008545] hover:bg-[#008545]/30 relative z-50`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-      <p className="text-center text-gray-600 mt-4">
-        Understanding roots is essential for mathematics and problem solving!
-      </p>
-    </div>
+        )}
+      </div>
+    </>
   );
 };
 
