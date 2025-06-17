@@ -276,7 +276,7 @@ const NthRoot = () => {
                       {!step1Complete ? (
                         <>
                           <div className={`flex items-center border rounded-md overflow-hidden relative ${
-                            hasError.step1 ? 'border-red-500' : ''
+                            hasError.step1 ? 'border-yellow-500' : ''
                           }`}>
                             <Input 
                               type="text"
@@ -287,7 +287,7 @@ const NthRoot = () => {
                               }}
                               placeholder="Enter the index"
                               className={`w-full border-0 focus-visible:ring-0 focus-visible:ring-offset-0 ${
-                                hasError.step1 ? 'bg-red-50' : ''
+                                hasError.step1 ? 'bg-yellow-50' : ''
                               }`}
                             />
                           </div>
@@ -345,7 +345,7 @@ const NthRoot = () => {
                       {!step2Complete ? (
                         <>
                           <div className={`flex items-center border rounded-md overflow-hidden relative ${
-                            hasError.step2 ? 'border-red-500' : ''
+                            hasError.step2 ? 'border-yellow-500' : ''
                           }`}>
                             <Input 
                               type="text"
@@ -356,7 +356,7 @@ const NthRoot = () => {
                               }}
                               placeholder="Enter your answer"
                               className={`w-full border-0 focus-visible:ring-0 focus-visible:ring-offset-0 ${
-                                hasError.step2 ? 'bg-red-50' : ''
+                                hasError.step2 ? 'bg-yellow-50' : ''
                               }`}
                             />
                           </div>
